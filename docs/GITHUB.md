@@ -38,7 +38,9 @@ chmod +x scripts/github-push.sh
 ./scripts/github-push.sh
 ```
 
-Default repo name: **`ai-fitness-coach`** (public).
+Your repo: **[github.com/selvendran254/AI-Fitness-Coach](https://github.com/selvendran254/AI-Fitness-Coach)**
+
+Default remote: `git@github.com:selvendran254/AI-Fitness-Coach.git`
 
 Private repo:
 

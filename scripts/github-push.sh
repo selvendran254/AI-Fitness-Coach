@@ -9,8 +9,8 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-REPO_NAME="${REPO_NAME:-ai-fitness-coach}"
-GITHUB_USER="${GITHUB_USER:-}"
+REPO_NAME="${REPO_NAME:-AI-Fitness-Coach}"
+GITHUB_USER="${GITHUB_USER:-selvendran254}"
 VISIBILITY="${VISIBILITY:-public}" # public | private
 
 GH_BIN="${GH_BIN:-gh}"
@@ -43,7 +43,7 @@ EOF
 )"
 fi
 
-REMOTE="https://github.com/${GITHUB_USER}/${REPO_NAME}.git"
+REMOTE="${REMOTE:-https://github.com/${GITHUB_USER}/${REPO_NAME}.git}"
 if git remote get-url origin &>/dev/null; then
   git remote set-url origin "$REMOTE"
 else
@@ -58,8 +58,8 @@ if command -v "$GH_BIN" &>/dev/null; then
     echo "Creating GitHub repo ${GITHUB_USER}/${REPO_NAME} ..."
     "$GH_BIN" repo create "$REPO_NAME" --${VISIBILITY} --source=. --remote=origin --push --description "AI Fitness Coach — diabetes & BP safe workouts (EN + Tamil)"
   else
-    echo "Repo exists. Pushing..."
-    git push -u origin main
+    echo "Repo exists. Pushing full monorepo to ${GITHUB_USER}/${REPO_NAME} ..."
+    git push -u origin main --force-with-lease
   fi
 else
   echo "gh CLI not found. Create repo manually:"
