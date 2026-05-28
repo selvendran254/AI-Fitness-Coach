@@ -30,9 +30,19 @@ Production-ready AI-powered fitness coaching web app for **diabetics** and **blo
 
 ## Quick start
 
+### GitHub
+
+Full upload guide: **[docs/GITHUB.md](docs/GITHUB.md)**
+
+```bash
+gh auth login   # one time
+./scripts/github-push.sh
+```
+
 ### 1. Clone and install
 
 ```bash
+git clone https://github.com/YOUR_USERNAME/ai-fitness-coach.git
 cd ai-fitness-coach
 npm install
 ```
