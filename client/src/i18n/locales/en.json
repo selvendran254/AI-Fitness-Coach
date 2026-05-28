@@ -1,0 +1,55 @@
+{
+  "app": {
+    "name": "AI Fitness Coach",
+    "tagline": "Safe fitness for diabetes & blood pressure"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "workouts": "Workouts",
+    "nutrition": "Nutrition",
+    "progress": "Progress",
+    "coach": "AI Coach",
+    "challenges": "Challenges",
+    "devices": "Phone & Watch",
+    "settings": "Settings",
+    "caregiver": "Family"
+  },
+  "auth": {
+    "login": "Sign In",
+    "register": "Create Account",
+    "email": "Email",
+    "password": "Password",
+    "logout": "Sign Out"
+  },
+  "settings": {
+    "title": "Settings",
+    "general": "General",
+    "health": "Health & Safety",
+    "goals": "Goals & Targets",
+    "workout": "Workout",
+    "nutrition": "Nutrition",
+    "sleep": "Sleep & Mood",
+    "notifications": "Notifications",
+    "privacy": "Privacy & Data",
+    "ai": "AI Coach",
+    "accessibility": "Accessibility",
+    "advanced": "Advanced",
+    "language": "Language",
+    "theme": "Theme",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeSystem": "System",
+    "unitSystem": "Unit System",
+    "metric": "Metric",
+    "imperial": "Imperial",
+    "save": "Save Changes",
+    "saved": "Settings saved"
+  },
+  "dashboard": {
+    "welcome": "Welcome back",
+    "todayWorkout": "Today's Workout",
+    "calories": "Calories",
+    "water": "Water",
+    "steps": "Steps"
+  }
+}

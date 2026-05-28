@@ -1,0 +1,470 @@
+// AI Fitness Coach — PostgreSQL schema
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  MODERATOR
+}
+
+enum FitnessLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum ActivityLevel {
+  SEDENTARY
+  LIGHTLY_ACTIVE
+  MODERATELY_ACTIVE
+  VERY_ACTIVE
+  EXTRA_ACTIVE
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+  PREFER_NOT_TO_SAY
+}
+
+enum Language {
+  en
+  ta
+}
+
+enum HealthCondition {
+  DIABETES_TYPE1
+  DIABETES_TYPE2
+  HYPERTENSION
+  PREDIABETES
+  NONE
+}
+
+enum PrimaryGoal {
+  WEIGHT_LOSS
+  WEIGHT_GAIN
+  MAINTENANCE
+  MUSCLE_GAIN
+  HEALTH_MANAGEMENT
+}
+
+enum Theme {
+  light
+  dark
+  system
+}
+
+enum ChallengeType {
+  STEPS
+  WORKOUTS
+  CALORIES
+  WATER
+  CUSTOM
+}
+
+enum ChallengeStatus {
+  PENDING
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum MealType {
+  BREAKFAST
+  LUNCH
+  DINNER
+  SNACK
+}
+
+enum WorkoutIntensity {
+  LOW
+  MODERATE
+  HIGH
+}
+
+model User {
+  id                String            @id @default(cuid())
+  email             String            @unique
+  passwordHash      String
+  firstName         String
+  lastName          String
+  role              UserRole          @default(USER)
+  avatarUrl         String?
+  dateOfBirth       DateTime?
+  gender            Gender?
+  heightCm          Float?
+  weightKg          Float?
+  fitnessLevel      FitnessLevel      @default(BEGINNER)
+  activityLevel     ActivityLevel     @default(SEDENTARY)
+  healthConditions  HealthCondition[] @default([])
+  dailyCalorieGoal  Int?
+  dailyWaterGoalMl  Int?              @default(2500)
+  dailySleepGoalHours Float?          @default(8)
+  preferredLanguage Language          @default(en)
+  timezone          String            @default("Asia/Kolkata")
+  isActive          Boolean           @default(true)
+  emailVerified     Boolean           @default(false)
+  onboardingCompleted Boolean         @default(false)
+  twoFactorEnabled  Boolean           @default(false)
+  twoFactorSecret   String?
+  emailVerifyToken  String?
+  emailVerifyExpires DateTime?
+  passwordResetToken String?
+  passwordResetExpires DateTime?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  goals             UserGoals?
+  settings          UserSettings?
+  refreshTokens     RefreshToken[]
+  workoutPlans      WorkoutPlan[]
+  workoutLogs       WorkoutLog[]
+  meals             Meal[]
+  mealPlans         MealPlan[]
+  waterLogs         WaterLog[]
+  sleepLogs         SleepLog[]
+  progressEntries   ProgressEntry[]
+  chatMessages      ChatMessage[]
+  challengesCreated Challenge[]       @relation("ChallengeCreator")
+  challengeParticipants ChallengeParticipant[]
+  friendshipsInitiated Friendship[]  @relation("FriendshipInitiator")
+  friendshipsReceived  Friendship[]  @relation("FriendshipReceiver")
+  notifications     Notification[]
+  pushSubscriptions PushSubscription[]
+  deviceConnections DeviceConnection[]
+  medicationLogs    MedicationLog[]
+  caregiverAsPatient CaregiverLink[] @relation("Patient")
+  caregiverAsViewer  CaregiverLink[] @relation("Caregiver")
+  pairingTokens     PairingToken[]
+
+  @@index([email])
+}
+
+model MedicationLog {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  medicationName String
+  dosage         String?
+  takenAt        DateTime @default(now())
+  scheduledFor   DateTime?
+  skipped        Boolean  @default(false)
+
+  @@index([userId])
+  @@index([takenAt])
+}
+
+model CaregiverLink {
+  id             String   @id @default(cuid())
+  patientId      String
+  patient        User     @relation("Patient", fields: [patientId], references: [id], onDelete: Cascade)
+  caregiverId    String?
+  caregiver      User?    @relation("Caregiver", fields: [caregiverId], references: [id])
+  caregiverEmail String
+  inviteToken    String   @unique @default(cuid())
+  status         String   @default("pending")
+  createdAt      DateTime @default(now())
+
+  @@index([patientId])
+  @@index([inviteToken])
+}
+
+model PairingToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String    @unique @default(cuid())
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([token])
+}
+
+enum DeviceProvider {
+  GOOGLE_FIT
+  FITBIT
+  GARMIN
+  SAMSUNG_HEALTH
+  APPLE_HEALTH
+  HEALTH_CONNECT
+  BLUETOOTH
+}
+
+enum DeviceType {
+  PHONE
+  WATCH
+}
+
+enum DeviceStatus {
+  DISCONNECTED
+  PENDING
+  CONNECTED
+  ERROR
+}
+
+model DeviceConnection {
+  id           String         @id @default(cuid())
+  userId       String
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider     DeviceProvider
+  deviceType   DeviceType
+  deviceName   String?
+  status       DeviceStatus   @default(PENDING)
+  accessToken  String?
+  refreshToken String?
+  expiresAt    DateTime?
+  lastSyncAt   DateTime?
+  lastSyncData Json?
+  metadata     Json?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  @@unique([userId, provider])
+  @@index([userId])
+}
+
+model UserGoals {
+  id                String      @id @default(cuid())
+  userId            String      @unique
+  user              User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  targetWeightKg    Float?
+  weeklyWorkoutDays Int         @default(3)
+  primaryGoal       PrimaryGoal @default(HEALTH_MANAGEMENT)
+  maxHeartRateBpm   Int?
+  targetStepsPerDay Int?        @default(8000)
+  updatedAt         DateTime    @updatedAt
+}
+
+model UserSettings {
+  id                        String   @id @default(cuid())
+  userId                    String   @unique
+  user                      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Stored as JSON for flexible advanced options
+  preferences               Json     @default("{}")
+  theme                     Theme    @default(system)
+  pushNotificationsEnabled  Boolean  @default(true)
+  offlineModeEnabled        Boolean  @default(true)
+  analyticsEnabled          Boolean  @default(true)
+  updatedAt                 DateTime @updatedAt
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  revokedAt DateTime?
+
+  @@index([userId])
+  @@index([token])
+}
+
+model WorkoutPlan {
+  id                      String           @id @default(cuid())
+  userId                  String
+  user                    User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title                   String
+  description             String?
+  durationMinutes         Int
+  intensity               WorkoutIntensity @default(MODERATE)
+  exercises               Json
+  aiGenerated             Boolean          @default(false)
+  suitableForDiabetes     Boolean          @default(true)
+  suitableForHypertension Boolean          @default(true)
+  isActive                Boolean          @default(true)
+  createdAt               DateTime         @default(now())
+  updatedAt               DateTime         @updatedAt
+  logs                    WorkoutLog[]
+
+  @@index([userId])
+}
+
+model WorkoutLog {
+  id              String       @id @default(cuid())
+  userId          String
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planId          String?
+  plan            WorkoutPlan? @relation(fields: [planId], references: [id], onDelete: SetNull)
+  title           String
+  startedAt       DateTime
+  completedAt     DateTime?
+  durationMinutes Int
+  caloriesBurned  Int?
+  heartRateAvg    Int?
+  exercises       Json
+  notes           String?
+  rating          Int?
+  createdAt       DateTime     @default(now())
+
+  @@index([userId])
+  @@index([startedAt])
+}
+
+model Meal {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  mealType    MealType
+  items       Json
+  totalMacros Json
+  photoUrl    String?
+  aiAnalyzed  Boolean  @default(false)
+  loggedAt    DateTime @default(now())
+
+  @@index([userId])
+  @@index([loggedAt])
+}
+
+model MealPlan {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title           String
+  days            Json
+  aiGenerated     Boolean  @default(true)
+  diabeticFriendly Boolean @default(true)
+  lowSodium       Boolean  @default(true)
+  createdAt       DateTime @default(now())
+
+  @@index([userId])
+}
+
+model WaterLog {
+  id       String   @id @default(cuid())
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amountMl Int
+  loggedAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([loggedAt])
+}
+
+model SleepLog {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bedTime       DateTime
+  wakeTime      DateTime
+  durationHours Float
+  quality       Int
+  notes         String?
+  createdAt     DateTime @default(now())
+
+  @@index([userId])
+}
+
+model ProgressEntry {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  weightKg   Float
+  bodyFatPercent Float?
+  muscleMassKg Float?
+  bmi        Float
+  waistCm    Float?
+  hipCm      Float?
+  chestCm    Float?
+  systolicBp Int?
+  diastolicBp Int?
+  bloodGlucoseMgDl Float?
+  photoUrl   String?
+  notes      String?
+  recordedAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([recordedAt])
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      String   // user | assistant | system
+  content   String
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model Challenge {
+  id          String          @id @default(cuid())
+  title       String
+  description String?
+  type        ChallengeType
+  targetValue Float
+  unit        String
+  startDate   DateTime
+  endDate     DateTime
+  status      ChallengeStatus @default(PENDING)
+  createdById String
+  createdBy   User            @relation("ChallengeCreator", fields: [createdById], references: [id])
+  participants ChallengeParticipant[]
+  createdAt   DateTime        @default(now())
+
+  @@index([status])
+}
+
+model ChallengeParticipant {
+  id           String    @id @default(cuid())
+  challengeId  String
+  challenge    Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currentValue Float     @default(0)
+  joinedAt     DateTime  @default(now())
+
+  @@unique([challengeId, userId])
+  @@index([challengeId])
+}
+
+model Friendship {
+  id          String   @id @default(cuid())
+  initiatorId String
+  initiator   User     @relation("FriendshipInitiator", fields: [initiatorId], references: [id], onDelete: Cascade)
+  receiverId  String
+  receiver    User     @relation("FriendshipReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  status      String   @default("pending") // pending | accepted | blocked
+  createdAt   DateTime @default(now())
+
+  @@unique([initiatorId, receiverId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  body      String
+  type      String
+  read      Boolean  @default(false)
+  data      Json?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model PushSubscription {
+  id       String @id @default(cuid())
+  userId   String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint String
+  keys     Json
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}

@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: fitcoach_dev
+          POSTGRES_DB: ai_fitness_coach
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build -w shared
+      - run: npm run db:push -w server
+        env:
+          DATABASE_URL: postgresql://postgres:fitcoach_dev@localhost:5433/ai_fitness_coach?schema=public
+          JWT_ACCESS_SECRET: test-access-secret-min-32-chars-long
+          JWT_REFRESH_SECRET: test-refresh-secret-min-32-chars-long
+
+      - run: npm run build -w server
+      - run: npm run build -w client
+      - run: npm test

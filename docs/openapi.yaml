@@ -1,0 +1,207 @@
+openapi: 3.0.3
+info:
+  title: AI Fitness Coach API
+  description: REST API for diabetic/BP fitness coaching (English + Tamil)
+  version: 1.0.0
+servers:
+  - url: http://localhost:3001/api/v1
+    description: Local development
+
+tags:
+  - name: Auth
+  - name: Users
+  - name: Workouts
+  - name: Nutrition
+  - name: AI
+  - name: Progress
+  - name: Challenges
+  - name: Admin
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: OK
+
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, firstName, lastName]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, minLength: 8 }
+                firstName: { type: string }
+                lastName: { type: string }
+                preferredLanguage: { type: string, enum: [en, ta] }
+                healthConditions: { type: array, items: { type: string } }
+      responses:
+        '201': { description: Created }
+        '409': { description: Email exists }
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: { type: string }
+                password: { type: string }
+      responses:
+        '200': { description: Tokens returned }
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Refresh access token
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refreshToken: { type: string }
+      responses:
+        '200': { description: New tokens }
+
+  /users/me:
+    get:
+      tags: [Users]
+      security: [{ bearerAuth: [] }]
+      summary: Get profile
+      responses:
+        '200': { description: User profile }
+    patch:
+      tags: [Users]
+      security: [{ bearerAuth: [] }]
+      summary: Update profile
+      responses:
+        '200': { description: Updated }
+
+  /users/me/settings:
+    get:
+      tags: [Users]
+      security: [{ bearerAuth: [] }]
+      summary: Get advanced settings
+      responses:
+        '200': { description: Settings with preferences JSON }
+    patch:
+      tags: [Users]
+      security: [{ bearerAuth: [] }]
+      summary: Update settings (partial merge)
+      responses:
+        '200': { description: Updated }
+
+  /workouts/generate:
+    post:
+      tags: [Workouts]
+      security: [{ bearerAuth: [] }]
+      summary: AI generate workout plan
+      responses:
+        '201': { description: Plan created }
+
+  /workouts/plans:
+    get:
+      tags: [Workouts]
+      security: [{ bearerAuth: [] }]
+      summary: List workout plans
+      responses:
+        '200': { description: Paginated list }
+
+  /workouts/logs:
+    get:
+      tags: [Workouts]
+      security: [{ bearerAuth: [] }]
+      summary: Workout history
+    post:
+      tags: [Workouts]
+      security: [{ bearerAuth: [] }]
+      summary: Log completed workout
+
+  /nutrition/meals/analyze:
+    post:
+      tags: [Nutrition]
+      security: [{ bearerAuth: [] }]
+      summary: AI food photo/description analysis
+      responses:
+        '200': { description: Macro estimate }
+
+  /nutrition/meals:
+    get:
+      tags: [Nutrition]
+      security: [{ bearerAuth: [] }]
+      summary: List meals
+    post:
+      tags: [Nutrition]
+      security: [{ bearerAuth: [] }]
+      summary: Log meal
+
+  /nutrition/meal-plans/generate:
+    post:
+      tags: [Nutrition]
+      security: [{ bearerAuth: [] }]
+      summary: AI meal plan generator
+
+  /nutrition/water:
+    post:
+      tags: [Nutrition]
+      security: [{ bearerAuth: [] }]
+      summary: Log water intake
+
+  /ai/chat:
+    post:
+      tags: [AI]
+      security: [{ bearerAuth: [] }]
+      summary: Chat with AI coach
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message: { type: string }
+      responses:
+        '200': { description: Assistant reply }
+
+  /progress/entries:
+    get:
+      tags: [Progress]
+      security: [{ bearerAuth: [] }]
+      summary: Body metrics history
+    post:
+      tags: [Progress]
+      security: [{ bearerAuth: [] }]
+      summary: Log progress entry
+
+  /challenges/leaderboard:
+    get:
+      tags: [Challenges]
+      security: [{ bearerAuth: [] }]
+      summary: Global leaderboard
+
+  /admin/stats:
+    get:
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      summary: Admin dashboard stats
+      responses:
+        '200': { description: Usage statistics }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

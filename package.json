@@ -1,0 +1,28 @@
+{
+  "name": "ai-fitness-coach",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AI-powered fitness coaching for diabetics and BP patients (English + Tamil)",
+  "workspaces": [
+    "client",
+    "server",
+    "shared"
+  ],
+  "scripts": {
+    "dev": "concurrently -n client,server -c blue,green \"npm run dev -w client\" \"npm run dev -w server\"",
+    "start": "bash scripts/start-dev.sh",
+    "build": "npm run build -w shared && npm run build -w server && npm run build -w client",
+    "test": "npm run test -w server && npm run test -w client",
+    "db:generate": "npm run db:generate -w server",
+    "db:migrate": "npm run db:migrate -w server",
+    "db:setup": "docker compose up -d postgres && cd server && npx prisma db push && npm run db:seed -w server",
+    "db:studio": "npm run db:studio -w server",
+    "lint": "npm run lint -w client && npm run lint -w server"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
